@@ -4,6 +4,9 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var session = require('express-session');
+var cookieSession = require('cookie-session');
+const User = require('./models/user')
+//var session = require('client-sessions');
 
 
 
@@ -12,11 +15,38 @@ var usersRouter = require('./routes/users');
 
 var app = express();
 
-// session setup, for flash
-app.use(session({ cookie: { maxAge: 60000 }, 
-                  secret: 'woot',
-                  resave: false, 
-                  saveUninitialized: false}));
+// cookie
+app.use(cookieSession({
+    name: 'session',
+    secret: 'zbe',
+    resave: false,
+    saveUninitialized: false,
+  httpOnly: true,
+  ephemeral: true,
+    cookie: {
+        expires: 600000
+    }
+}));
+
+// This middleware will check if user's cookie is still saved in browser and user is not set, then automatically log the user out.
+// This usually happens when you stop your express server after login, your cookie still remains saved in the browser.
+app.use(function(req, res, next) {
+  if (req.session && req.session.user) {
+    User.findOne({ email: req.session.user.email }, function(err, user) {
+      if (user) {
+        req.user = user;
+        delete req.user.password; // delete the password from the session
+        req.session.user = user;  //refresh the session value
+        res.locals.user = user;
+      }
+      // finishing processing the middleware and run the route
+      next();
+    });
+  } else {
+    next();
+  }
+});
+
 
 // setup mongodb
 const mongoose = require('mongoose');
@@ -25,6 +55,11 @@ mongoose.connect(mongoDB);
 mongoose.Promise = global.Promise;
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB 连接错误：'));
+
+// parse post content
+var bodyParser = require('body-parser')
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: true}))
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -35,7 +70,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-
 
 // passport
 var passport = require('passport');

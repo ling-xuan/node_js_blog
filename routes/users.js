@@ -5,54 +5,15 @@ const passport = require('passport')
  
 const User = require('../models/user')
 const users_controller = require('../controllers/usersController');
+const filters_controller = require('../controllers/filtersController');
  
  
-//validation schema
- 
-const userSchema = Joi.object().keys({
-  email: Joi.string().email().required(),
-  username: Joi.string().required(),
-  password: Joi.string().regex(/^[a-zA-Z0-9]/).required(),
-  confirmationPassword: Joi.any().valid(Joi.ref('password')).required()
-})
- 
-router.route('/signup')
-  .get((req, res) => {
-    res.render('signup', {expressFlash: req.flash('error')})
-  })
-  .post(async (req, res, next) => {
-    try {
-      const result = Joi.validate(req.body, userSchema)
-      if (result.error) {
-        req.flash('error', 'Data entered is not valid. Please try again.')
-        res.redirect('/users/signup')
-        return
-      }
- 
-      const user = await User.findOne({ 'email': result.value.email })
-      if (user) {
-        req.flash('error', 'Email is already in use.')
-        res.redirect('/users/signup')
-        return
-      }
- 
-      const hash = await User.hashPassword(result.value.password)
- 
-      delete result.value.confirmationPassword
-      result.value.password = hash
- 
-      const newUser = await new User(result.value)
-      await newUser.save()
- 
-      req.flash('success', 'Registration successfully, go ahead and login.')
-      res.redirect('/users/login')
- 
-    } catch(error) {
-      next(error)
-    }
-  })
-
+router.get('/signup', users_controller.signup_get);
+router.post('/signup', users_controller.signup_post);
 router.get('/login', users_controller.login_get);
 router.post('/login', users_controller.login_post);
+router.get('/add_post', filters_controller.requireLogin, users_controller.add_post_get);
+router.post('/add_post', filters_controller.requireLogin, users_controller.add_post_post);
+router.get('/logout', users_controller.logout_get);
 
 module.exports = router

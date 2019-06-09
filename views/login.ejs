@@ -1,12 +1,16 @@
-<form method="post" action="index.html">
+<form method="post" action="login">
 <div class="box">
 <h1>Dashboard</h1>
+<% if ( error.length > 0 ) { %>
+  <p>Message: <%= error %> </p>
+<% } %>
 
-<input type="email" name="email" value="email" onFocus="field_focus(this, 'email');" onblur="field_blur(this, 'email');" class="email" />
+	<input type="email" name="email" value="" onFocus="field_focus(this, 'email');" onblur="field_blur(this, 'email');" class="email" />
   
-<input type="password" name="password" value="password" onFocus="field_focus(this, 'password');" onblur="field_blur(this, 'email');" class="email" />
+	<input type="password" name="password" value="" onFocus="field_focus(this, 'password');" onblur="field_blur(this, 'email');" class="email" />
   
-<a href="#"><div class="btn">Sign In</div></a> <!-- End Btn -->
+	<p>
+	<input type="submit" value="login">
 
 <a href="#"><div id="btn2">Sign Up</div></a> <!-- End Btn2 -->
   
